@@ -8,11 +8,14 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MaNguonMo.Data;
 using MaNguonMo.Models;
+using MaNguonMo.Models.Process;
 
 namespace MaNguonMo.Controllers
 {
     public class EmployeeController : Controller
     {
+        XuLyChuoi Xulychuoi = new XuLyChuoi();
+        AutoGenerateKey atoKey = new AutoGenerateKey();
         private readonly ApplicationDbContext _context;
 
         public EmployeeController(ApplicationDbContext context)
@@ -57,8 +60,20 @@ namespace MaNguonMo.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("EmployeeID,EmployeeName,Address")] Employee employee)
         {
+            employee.EmployeeName = Xulychuoi.Xuly(employee.EmployeeName);
+            employee.Address = Xulychuoi.Xuly(employee.Address);
             if (ModelState.IsValid)
             {
+                var emp = _context.Employee.ToList().OrderByDescending(c => c.EmployeeID);
+                var countEmployee = _context.Person.Count();
+
+                if (countEmployee == 0)
+                {
+                    employee.EmployeeID = "EL001";
+                }else
+                {
+                    employee.EmployeeID = atoKey.SinhMaTuDong(emp.FirstOrDefault().EmployeeID);
+                }
                 _context.Add(employee);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

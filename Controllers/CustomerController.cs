@@ -8,11 +8,14 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MaNguonMo.Data;
 using MaNguonMo.Models;
+using MaNguonMo.Models.Process;
 
 namespace MaNguonMo.Controllers
 {
     public class CustomerController : Controller
     {
+        XuLyChuoi Xulychuoi = new XuLyChuoi();
+        AutoGenerateKey atoKey = new AutoGenerateKey();
         private readonly ApplicationDbContext _context;
 
         public CustomerController(ApplicationDbContext context)
@@ -57,8 +60,20 @@ namespace MaNguonMo.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Email,Gender,Birthday,PersonID,PersonName,Address")] Customer customer)
         {
+            customer.PersonName = Xulychuoi.Xuly(customer.PersonName);
+            customer.Address = Xulychuoi.Xuly(customer.Address);
             if (ModelState.IsValid)
             {
+                var emp = _context.Person.ToList().OrderByDescending(c => c.PersonID);
+                var countEmployee = _context.Person.Count();
+
+                if (countEmployee == 0)
+                {
+                    customer.PersonID = "PR001";
+                }else
+                {
+                    customer.PersonID = atoKey.SinhMaTuDong(emp.FirstOrDefault().PersonID);
+                }
                 _context.Add(customer);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
